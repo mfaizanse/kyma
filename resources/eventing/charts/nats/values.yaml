@@ -111,7 +111,7 @@ nats:
     #                          #
     ############################
     fileStorage:
-      enabled: false
+      enabled: true
       storageDirectory: /data
 
       # Set for use with existing PVC
@@ -236,7 +236,7 @@ statefulSetAnnotations: {}
 serviceAnnotations: {}
 
 cluster:
-  enabled: false
+  enabled: true
   replicas: 3
   noAdvertise: false
   # authorization:
