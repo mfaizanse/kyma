@@ -12,10 +12,19 @@ const (
 	NatsBackendType BackendType = "NATS"
 )
 
+//// ActiveBackend contains a list of ActiveBackends
+type ActiveBackend struct {
+	Backend 							BackendType 	`json:"backendType"`
+	ConfigurationsSecretsName 			string 			`json:"configurationsSecretsName"`
+	ConfigurationsSecretsNamespace 		string 			`json:"configurationsSecretsNamespace"`
+}
+
 // EventingBackendSpec defines the desired state of EventingBackend
 type EventingBackendSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	ActiveBackends 	[]ActiveBackend 	`json:"activeBackends"`
+	DefaultBackend 	string 				`json:"defaultBackend"`
 }
 
 // EventingBackendStatus defines the observed state of EventingBackend
