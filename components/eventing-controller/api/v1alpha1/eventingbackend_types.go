@@ -14,16 +14,25 @@ const (
 
 //// ActiveBackend contains a list of ActiveBackends
 type ActiveBackend struct {
+	// Specifies the backend type. Allowed values are "BEB" and "NATS"
 	Backend 							BackendType 	`json:"backendType"`
-	ConfigurationsSecretsName 			string 			`json:"configurationsSecretsName"`
-	ConfigurationsSecretsNamespace 		string 			`json:"configurationsSecretsNamespace"`
+
+	// SecretName defines the name of k8s secret which contains configs for this backend
+	// +optional
+	SecretName 			string 			`json:"secretName,omitempty"`
+
+	// SecretName defines the namespace of k8s secret which contains configs for this backend
+	// +optional
+	SecretNamespace 		string 			`json:"secretNamespace,omitempty"`
 }
 
 // EventingBackendSpec defines the desired state of EventingBackend
 type EventingBackendSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ActiveBackends 	[]ActiveBackend 	`json:"activeBackends"`
+	ActiveBackendLists 	[]ActiveBackend 	`json:"activeBackends"`
+
+	// Specifies the active backend type. Allowed values are "BEB" and "NATS"
 	DefaultBackend 	string 				`json:"defaultBackend"`
 }
 
