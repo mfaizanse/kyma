@@ -171,7 +171,7 @@ func (h *Handler) handlePublishLegacyEventV1alpha1(writer http.ResponseWriter, p
 func (h *Handler) handleSendEventAndRecordMetricsLegacy(writer http.ResponseWriter, request *http.Request, event *cev2event.Event) (sender.PublishResult, error) {
 	result, err := h.sendEventAndRecordMetrics(request.Context(), event, h.Sender.URL(), request.Header)
 	if err != nil {
-		h.namedLogger().With().Error(err)
+		h.namedLogger().Error(err)
 		httpStatus := http.StatusInternalServerError
 		if errors.Is(err, sender.ErrInsufficientStorage) {
 			httpStatus = http.StatusInsufficientStorage
@@ -181,7 +181,7 @@ func (h *Handler) handleSendEventAndRecordMetricsLegacy(writer http.ResponseWrit
 		h.LegacyTransformer.TransformsCEResponseToLegacyResponse(writer, httpStatus, event, err.Error())
 		return nil, err
 	}
-	h.namedLogger().With().Debug(result)
+	h.namedLogger().Debug(result)
 	return result, nil
 }
 
@@ -234,7 +234,7 @@ func (h *Handler) publishCloudEvents(writer http.ResponseWriter, request *http.R
 
 	event, err := extractCloudEventFromRequest(request)
 	if err != nil {
-		h.namedLogger().With().Error(err)
+		h.namedLogger().Error(err)
 		e := writeResponse(writer, http.StatusBadRequest, []byte(err.Error()))
 		if e != nil {
 			h.namedLogger().Error(e)
@@ -275,14 +275,14 @@ func (h *Handler) publishCloudEvents(writer http.ResponseWriter, request *http.R
 			httpStatus = http.StatusInsufficientStorage
 		}
 		writer.WriteHeader(httpStatus)
-		h.namedLogger().With().Error(err)
+		h.namedLogger().Error(err)
 		return
 	}
-	h.namedLogger().With().Debug(result)
+	h.namedLogger().Debug(result)
 
 	err = writeResponse(writer, result.HTTPStatus(), result.ResponseBody())
 	if err != nil {
-		h.namedLogger().With().Error(err)
+		h.namedLogger().Error(err)
 	}
 }
 
