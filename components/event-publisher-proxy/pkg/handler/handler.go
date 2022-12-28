@@ -145,19 +145,10 @@ func (h *Handler) handlePublishLegacyEventV1alpha2(writer http.ResponseWriter, p
 		return nil, nil
 	}
 
-	result, err := h.sendEventAndRecordMetrics(request.Context(), event, h.Sender.URL(), request.Header)
+	result, err := h.handleSendEventAndRecordMetricsLegacy(writer, request, event)
 	if err != nil {
-		h.namedLogger().With().Error(err)
-		httpStatus := http.StatusInternalServerError
-		if errors.Is(err, sender.ErrInsufficientStorage) {
-			httpStatus = http.StatusInsufficientStorage
-		} else if errors.Is(err, sender.ErrBackendTargetNotFound) {
-			httpStatus = http.StatusBadGateway
-		}
-		h.LegacyTransformer.TransformsCEResponseToLegacyResponse(writer, httpStatus, event, err.Error())
 		return nil, nil
 	}
-	h.namedLogger().With().Debug(result)
 
 	return result, event
 }
@@ -169,6 +160,15 @@ func (h *Handler) handlePublishLegacyEventV1alpha1(writer http.ResponseWriter, p
 		return nil, nil
 	}
 
+	result, err := h.handleSendEventAndRecordMetricsLegacy(writer, request, event)
+	if err != nil {
+		return nil, nil
+	}
+
+	return result, event
+}
+
+func (h *Handler) handleSendEventAndRecordMetricsLegacy(writer http.ResponseWriter, request *http.Request, event *cev2event.Event) (sender.PublishResult, error) {
 	result, err := h.sendEventAndRecordMetrics(request.Context(), event, h.Sender.URL(), request.Header)
 	if err != nil {
 		h.namedLogger().With().Error(err)
@@ -179,11 +179,10 @@ func (h *Handler) handlePublishLegacyEventV1alpha1(writer http.ResponseWriter, p
 			httpStatus = http.StatusBadGateway
 		}
 		h.LegacyTransformer.TransformsCEResponseToLegacyResponse(writer, httpStatus, event, err.Error())
-		return nil, nil
+		return nil, err
 	}
 	h.namedLogger().With().Debug(result)
-
-	return result, event
+	return result, nil
 }
 
 // publishLegacyEventsAsCE converts an incoming request in legacy event format to a cloudevent and dispatches it using
