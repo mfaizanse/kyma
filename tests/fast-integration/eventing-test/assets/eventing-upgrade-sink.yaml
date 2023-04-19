@@ -40,6 +40,7 @@ spec:
         }
       source: |
         let receivedEvents = {};
+        let returnError = false;
         const axios = require('axios');
         function cloudEventHeaders(event) {
           return Object.keys(event).reduce((accumulator, current) => {
@@ -64,7 +65,19 @@ spec:
               }
               console.log("event NOT found with id: ", event.extensions.request.query.eventid);
               return { success: false};
+            } else if (event.extensions.request.query.returnError){
+              // Set this sink to return errors to events.
+              console.log("Setting this sink to return errors:", event.extensions.request.query.returnError);
+              returnError = event.extensions.request.query.returnError;
+              console.log("returnError:", returnError);
+              return { success: true }
             } else if (event["ce-type"]){
+              if (returnError) {
+                // return error
+                console.log("Returning error to in-app event:", event["ce-type"], ", id: ", event["ce-id"]);
+                event.setResponseStatus(500);
+                return { success: false }
+              }
               // Store all valid received events.
               console.log("Got in-app event:", event["ce-type"], ", id: ", event["ce-id"]);
               savedFormat = { ceHeaders: cloudEventHeaders(event), payload: event.data, headers: event.extensions.request.headers }

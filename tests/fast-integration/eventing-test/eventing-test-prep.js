@@ -22,7 +22,7 @@ const {
   waitForEventingSinkFunction,
   deployV1Alpha1Subscriptions,
   deployV1Alpha2Subscriptions,
-  createK8sNamespace,
+  createK8sNamespace, eventingUpgradeSinkName, isUpgradeJob, isJSAtLeastOnceDeliveryTestEnabled,
 } = require('./utils');
 const {
   eventMeshSecretFilePath,
@@ -110,6 +110,20 @@ describe('Eventing tests preparation', function() {
 
   it('Prepare v1alpha2 subscriptions', async function() {
     await deployV1Alpha2Subscriptions();
+  });
+
+  it('Deploy eventing-upgrade-sink function', async function() {
+    if (!isUpgradeJob || !isJSAtLeastOnceDeliveryTestEnabled) {
+      debug(`Skipping deploy eventing-upgrade-sink function`);
+      debug(`isUpgradeJob: ${isUpgradeJob}, 
+          isJSAtLeastOnceDeliveryTestEnabled: ${isJSAtLeastOnceDeliveryTestEnabled}`);
+      this.skip();
+    }
+
+    await deployEventingSinkFunction(eventingUpgradeSinkName);
+    await waitForEventingSinkFunction(eventingUpgradeSinkName);
+    debug(`checking if eventing upgrade sink is reachable through the api rule`);
+    await checkFunctionReachable(eventingUpgradeSinkName, testNamespace, clusterHost);
   });
 
   afterEach(async function() {

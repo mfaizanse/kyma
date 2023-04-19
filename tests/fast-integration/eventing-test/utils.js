@@ -660,6 +660,30 @@ async function createK8sNamespace(name) {
   await k8sApplyWithRetries([namespaceObj(name)]);
 }
 
+async function setSinkToReturnError(sink, proxyHost, returnError=true, retriesLeft = 10) {
+  return await retryPromise(async () => {
+    debug(`Setting Upgrade sink to return Error: "${returnError}"`);
+
+    const response = await axios.get(`https://${sink}.${proxyHost}`,
+        {params: {returnError: returnError}});
+
+    debug('Received response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+    });
+
+    expect(response.data.success).to.be.equal(true);
+
+    return {
+      response,
+    };
+  }, retriesLeft, 1 * 1000)
+      .catch((err) => {
+        throw convertAxiosError(err, 'Setting Upgrade sink to return Error failed');
+      });
+}
+
 function debugBanner(message) {
   const line = '[BANNER] ***************************************************************************************';
   debug(line);
@@ -718,4 +742,5 @@ module.exports = {
   debugBanner,
   isJSRecreatedTestEnabled,
   isJSAtLeastOnceDeliveryTestEnabled,
+  setSinkToReturnError,
 };

@@ -61,6 +61,7 @@ const {
   debugBanner,
   isJSRecreatedTestEnabled,
   isJSAtLeastOnceDeliveryTestEnabled,
+  setSinkToReturnError,
 } = require('./utils');
 const {
   bebBackend,
@@ -339,16 +340,13 @@ describe('Eventing tests', function() {
           debugBanner('Pre-upgrade tasks to publish event which should not be delivered');
         });
 
-        it('Deploy eventing-upgrade-sink', async function() {
-          await deployEventingSinkFunction(eventingUpgradeSinkName);
-          await waitForEventingSinkFunction(eventingUpgradeSinkName);
-          debug(`checking if eventing upgrade sink is reachable through the api rule`);
-          await checkFunctionReachable(eventingUpgradeSinkName, testNamespace, clusterHost);
-        });
-
         it('Create subscriptions during pre-upgrade phase', async function() {
           await k8sApply(subscriptions, testNamespace);
           await waitForSubscription(subName, testNamespace, 'v1alpha2');
+        });
+
+        it('Set eventing-upgrade-sink to not return error', async function() {
+          await setSinkToReturnError(eventingUpgradeSinkName, clusterHost, false);
         });
 
         it('Verify if events delivery is working', async function() {
@@ -356,10 +354,8 @@ describe('Eventing tests', function() {
               subscriptionsTypes[0].source, false, eventingUpgradeSinkName);
         });
 
-        it('Delete the eventing-upgrade-sink', async function() {
-          await undeployEventingFunction(eventingUpgradeSinkName);
-          debug(`checking if eventing upgrade sink is not alive anymore...`);
-          await checkFunctionUnreachable(eventingUpgradeSinkName, testNamespace, clusterHost);
+        it('Set eventing-upgrade-sink to return error', async function() {
+          await setSinkToReturnError(eventingUpgradeSinkName, clusterHost, true);
         });
 
         it('Generate new eventId, save the id and publish events', async function() {
@@ -401,19 +397,10 @@ describe('Eventing tests', function() {
           debugBanner('Post-upgrade tasks to verify that event is delivered after sink is available');
         });
 
-        it(`deploy again and wait for function: ${eventingUpgradeSinkName}`, async function() {
-          await deployEventingSinkFunction(eventingUpgradeSinkName);
-          await waitForEventingSinkFunction(eventingUpgradeSinkName);
+        it('Set eventing-upgrade-sink to not return error', async function() {
+          await setSinkToReturnError(eventingUpgradeSinkName, clusterHost, false);
           debug(`checking if eventing upgrade sink is reachable through the api rule`);
           await checkFunctionReachable(eventingUpgradeSinkName, testNamespace, clusterHost);
-        });
-
-        it('Label subscription to trigger reconciliation', async function() {
-          subscriptions[0].metadata.labels = {
-            'changed': 'now',
-          };
-          await k8sApply(subscriptions, testNamespace);
-          await waitForSubscription(subName, testNamespace, 'v1alpha2');
         });
 
         it('Wait for the pending event to be delivered', async function() {
